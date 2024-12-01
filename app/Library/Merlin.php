@@ -7,7 +7,13 @@ use GuzzleHttp\Client;
 
 class Merlin
 {
-    public function setOrder($payload){
+    /**
+     * Send request to Merlin.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse | mixed
+     */
+    public static function setOrder($payload){
         try{
             // Send the request using Guzzle
             $client = new Client();

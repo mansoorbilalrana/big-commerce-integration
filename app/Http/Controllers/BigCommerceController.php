@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Library\Merlin;
 use Illuminate\Http\Request;
 use App\Library\BigCommerce;
 
@@ -137,7 +138,9 @@ class BigCommerceController extends Controller
             // Prepare Payload & Create Order on Merlin side
             $merlinJsonPayload = $this->getMerlinJsonPayload($orderItems, $getOrder);
             $merlinPayload = $this->generateXmlPayload($merlinJsonPayload);
-            return $merlinPayload;
+
+            $merlinResponse = Merlin::setOrder($merlinPayload);
+            return $merlinResponse;
             // Update order status on BigCommerce side
             $updateProductPayload = [
                 "status_id" => 9
