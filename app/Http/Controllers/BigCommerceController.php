@@ -127,7 +127,6 @@ class BigCommerceController extends Controller
                 "created_at" => Carbon::now(),
                 "updated_at" => Carbon::now(),
             ]);
-            return 'order created';
             //  Get Product Info
             $productInfo = [];
             if(isset($getOrder['products'])){
