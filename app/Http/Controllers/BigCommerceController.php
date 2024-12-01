@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Library\Merlin;
+use App\Models\Order;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Library\BigCommerce;
 
@@ -116,7 +118,16 @@ class BigCommerceController extends Controller
             $callbackResponse = $request->all();
             $orderId = $callbackResponse['data']['id'];
             $getOrder = $this->bigCommerce->getOrders([], $orderId);
-
+            // Save Order Details
+            $createOrder = Order::create([
+                "order_id" => $orderId,
+                "status" => $getOrder['status'],
+                "status_id" => $getOrder['status_id'],
+                "big_commerce_response" => json_encode($getOrder),
+                "created_at" => Carbon::now(),
+                "updated_at" => Carbon::now(),
+            ]);
+            return 'order created';
             //  Get Product Info
             $productInfo = [];
             if(isset($getOrder['products'])){
