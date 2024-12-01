@@ -156,7 +156,10 @@ class BigCommerceController extends Controller
                 "status_id" => 9
             ];
             $updateOrder = $this->bigCommerce->updateOrder($updateProductPayload, $orderId);
-
+            Order::where('order_id', $orderId)->update([
+                "status" => $updateOrder->status,
+                "status_id" => $updateOrder->status_id,
+            ]);
             return response()->json(['order'=> $getOrder, 'products'=> $productInfo, 'updated_order'=> $updateOrder]);
         }catch (\Exception $e) {
             return response()->json([ 'success' => false,'message' => $e->getMessage(),], 500);
