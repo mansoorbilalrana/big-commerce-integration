@@ -20,24 +20,29 @@ class Merlin
             $response = $client->post(env('MERLIN_BASE_URL'), [
                 'headers' => [
                     'Content-Type' => 'text/xml; charset=utf-8',
-                    'SOAPAction' => 'CCBS_SetOrder',
+                    'SOAPAction' => 'CCBS/SetOrder',
                 ],
+                'http_errors' => false,
                 'body' => $payload,
             ]);
-
-            // Output the response
             $responseBody = $response->getBody()->getContents();
 
-            // Load the response into SimpleXMLElement for parsing
-            $xmlResponse = simplexml_load_string($responseBody);
+            $updatedResponse = preg_replace('/xmlns="CCBS"/', 'xmlns="http://www.example.com/CCBS"', $responseBody);
 
-            // Convert the XML to JSON to inspect the structure easily
-            $jsonResponse = json_encode($xmlResponse);
+            $xml = simplexml_load_string($updatedResponse);
+            $code = (string) $xml->xpath('//status/code')[0];
+            $message = (string) $xml->xpath('//status/message')[0];
 
-            // Output the JSON response to inspect it
-            return $jsonResponse;
-        } catch (RequestException $e) {
-            return $e->getMessage();
+            // Return the extracted data as an array
+            $result = [
+                'code' => $code,
+                'message' => $message,
+            ];
+            return $result;
+        } catch (SoapFault $e) {
+            echo 'Error: ' . $e->getMessage();
+            // Optionally, display the full response
+            echo 'Response: ' . $e->getCode();
         }
 
     }

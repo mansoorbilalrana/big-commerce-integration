@@ -150,17 +150,22 @@ class BigCommerceController extends Controller
             $merlinPayload = $this->generateXmlPayload($merlinJsonPayload);
 
             $merlinResponse = Merlin::setOrder($merlinPayload);
-            return $merlinResponse;
-            // Update order status on BigCommerce side
-            $updateProductPayload = [
-                "status_id" => 9
-            ];
-            $updateOrder = $this->bigCommerce->updateOrder($updateProductPayload, $orderId);
-            Order::where('order_id', $orderId)->update([
-                "status" => $updateOrder->status,
-                "status_id" => $updateOrder->status_id,
-            ]);
-            return response()->json(['order'=> $getOrder, 'products'=> $productInfo, 'updated_order'=> $updateOrder]);
+
+            if(isset($merlinResponse['code']) && $merlinResponse['code'] == "0"){
+                // Update order status on BigCommerce side
+                $updateProductPayload = [
+                    "status_id" => 9
+                ];
+                $updateOrder = $this->bigCommerce->updateOrder($updateProductPayload, $orderId);
+                Order::where('order_id', $orderId)->update([
+                    "status" => $updateOrder['status'],
+                    "status_id" => $updateOrder['status_id'],
+                    "merlin_id" => $merlinResponse['message'],
+                    "merlin_response" => json_encode($merlinResponse)
+                ]);
+            }
+
+            return response()->json(['order'=> $getOrder, 'products'=> $productInfo, 'updated_order'=> $updateOrder, 'merlin_response' => $merlinResponse]);
         }catch (\Exception $e) {
             return response()->json([ 'success' => false,'message' => $e->getMessage(),], 500);
         }
@@ -189,7 +194,7 @@ class BigCommerceController extends Controller
                 "del_country" => $getOrder['billing_address']['country'],
                 "del_postcode" => $getOrder['billing_address']['zip'],
                 //
-                "due_date" => $getOrder['date_created'],
+                "due_date" => Carbon::parse($getOrder['date_created'])->format('Y-m-d'),
                 "ref" => $getOrder['staff_notes'],
                 "carriage" => $getOrder['shipping_cost_inc_tax'],
                 "webref1" => "",
