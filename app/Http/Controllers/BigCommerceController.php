@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Library\Merlin;
 use App\Models\Order;
+use App\Models\MerlinCustomer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Library\BigCommerce;
@@ -118,54 +119,57 @@ class BigCommerceController extends Controller
             $callbackResponse = $request->all();
             $orderId = $callbackResponse['data']['id'];
             $getOrder = $this->bigCommerce->getOrders([], $orderId);
-            // Save Order Details
-            $createOrder = Order::create([
-                "order_id" => $orderId,
-                "status" => $getOrder['status'],
-                "status_id" => $getOrder['status_id'],
-                "big_commerce_response" => json_encode($getOrder),
-                "created_at" => Carbon::now(),
-                "updated_at" => Carbon::now(),
-            ]);
-            //  Get Product Info
-            $productInfo = [];
-            if(isset($getOrder['products'])){
-                $productInfo = $this->bigCommerce->getProduct($getOrder['products']['url'] );
-            }
 
-            if(count($productInfo)> 0) {
-                $products = collect($productInfo);
-                $orderItems = [];
-                foreach($products as $product) {
-                    $item = new \stdClass();
-                    $item->part = $product['sku'];
-                    $item->depot = 'DONC';
-                    $item->quantity = $product['quantity'];
-                    $item->price = $product['total_inc_tax'];
-                    array_push($orderItems, $item);
-                }
-            }
-            // Prepare Payload & Create Order on Merlin side
-            $merlinJsonPayload = $this->getMerlinJsonPayload($orderItems, $getOrder);
-            $merlinPayload = $this->generateXmlPayload($merlinJsonPayload);
-
-            $merlinResponse = Merlin::setOrder($merlinPayload);
-
-            if(isset($merlinResponse['code']) && $merlinResponse['code'] == "0"){
-                // Update order status on BigCommerce side
-                $updateProductPayload = [
-                    "status_id" => 9
-                ];
-                $updateOrder = $this->bigCommerce->updateOrder($updateProductPayload, $orderId);
-                Order::where('order_id', $orderId)->update([
-                    "status" => $updateOrder['status'],
-                    "status_id" => $updateOrder['status_id'],
-                    "merlin_id" => $merlinResponse['message'],
-                    "merlin_response" => json_encode($merlinResponse)
+            if($getOrder['status_id'] == 7 || $getOrder['status_id'] == 11){
+                // Save Order Details
+                $createOrder = Order::create([
+                    "order_id" => $orderId,
+                    "status" => $getOrder['status'],
+                    "status_id" => $getOrder['status_id'],
+                    "big_commerce_response" => json_encode($getOrder),
+                    "created_at" => Carbon::now(),
+                    "updated_at" => Carbon::now(),
                 ]);
-            }
+                //  Get Product Info
+                $productInfo = [];
+                if(isset($getOrder['products'])){
+                    $productInfo = $this->bigCommerce->getProduct($getOrder['products']['url'] );
+                }
 
-            return response()->json(['order'=> $getOrder, 'products'=> $productInfo, 'updated_order'=> $updateOrder, 'merlin_response' => $merlinResponse]);
+                if(count($productInfo)> 0) {
+                    $products = collect($productInfo);
+                    $orderItems = [];
+                    foreach($products as $product) {
+                        $item = new \stdClass();
+                        $item->part = $product['sku'];
+                        $item->depot = 'DONC';
+                        $item->quantity = $product['quantity'];
+                        $item->price = $product['total_inc_tax'];
+                        array_push($orderItems, $item);
+                    }
+                }
+                // Prepare Payload & Create Order on Merlin side
+                $merlinJsonPayload = $this->getMerlinJsonPayload($orderItems, $getOrder);
+                $merlinPayload = $this->generateXmlPayload($merlinJsonPayload);
+                $merlinResponse = Merlin::setOrder($merlinPayload);
+
+                if(isset($merlinResponse['code']) && $merlinResponse['code'] == "0"){
+                    // Update order status on BigCommerce side
+                    $updateProductPayload = [
+                        "status_id" => 9
+                    ];
+                    $updateOrder = $this->bigCommerce->updateOrder($updateProductPayload, $orderId);
+                    Order::where('order_id', $orderId)->update([
+                        "status" => $updateOrder['status'],
+                        "status_id" => $updateOrder['status_id'],
+                        "merlin_id" => $merlinResponse['message'],
+                        "merlin_response" => json_encode($merlinResponse)
+                    ]);
+                }
+                return response()->json(['order'=> $getOrder, 'products'=> $productInfo, 'updated_order'=> $updateOrder, 'merlin_response' => $merlinResponse]);
+            }
+            return true;
+
         }catch (\Exception $e) {
             return response()->json([ 'success' => false,'message' => $e->getMessage(),], 500);
         }
@@ -174,11 +178,13 @@ class BigCommerceController extends Controller
 
     public function getMerlinJsonPayload($orderItems, $getOrder) {
         try{
+            $checkCustomer = MerlinCustomer::where('big_commerce_id', $getOrder['customer_id'])->first();
+            $customerId = !is_null($checkCustomer) ? $checkCustomer['merlin_id'] : "5WEB02";
             $merlinJsonPayload = [
                 "items" => $orderItems,
                 "company" => 1,
                 "depot" => 'DONC',
-                "inv_account" => '1ABP01',
+                "inv_account" => $customerId,
                 "inv_name" => $getOrder['billing_address']['first_name'].' '.$getOrder['billing_address']['last_name'],
                 "inv_add1" => $getOrder['billing_address']['street_1'],
                 "inv_add2" => $getOrder['billing_address']['street_2'],
@@ -195,7 +201,7 @@ class BigCommerceController extends Controller
                 "del_postcode" => $getOrder['billing_address']['zip'],
                 //
                 "due_date" => Carbon::parse($getOrder['date_created'])->format('Y-m-d'),
-                "ref" => $getOrder['staff_notes'],
+                "ref" => $getOrder['id'],
                 "carriage" => $getOrder['shipping_cost_inc_tax'],
                 "webref1" => "",
                 "webref2" => "",
