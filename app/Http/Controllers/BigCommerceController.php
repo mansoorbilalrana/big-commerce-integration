@@ -180,12 +180,13 @@ class BigCommerceController extends Controller
         try{
             $checkCustomer = MerlinCustomer::where('big_commerce_id', $getOrder['customer_id'])->first();
             $customerId = !is_null($checkCustomer) ? $checkCustomer['merlin_id'] : "5WEB02";
+            $invName = $getOrder['billing_address']['company'] != "" ? $getOrder['billing_address']['company'] : $getOrder['billing_address']['first_name'].' '.$getOrder['billing_address']['last_name'];
             $merlinJsonPayload = [
                 "items" => $orderItems,
                 "company" => 1,
                 "depot" => 'DONC',
                 "inv_account" => $customerId,
-                "inv_name" => $getOrder['billing_address']['first_name'].' '.$getOrder['billing_address']['last_name'],
+                "inv_name" => $invName,
                 "inv_add1" => $getOrder['billing_address']['street_1'],
                 "inv_add2" => $getOrder['billing_address']['street_2'],
                 "inv_city" => $getOrder['billing_address']['city'],
