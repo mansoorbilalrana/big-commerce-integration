@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Library\Merlin;
 use App\Models\Order;
 use App\Models\MerlinCustomer;
+use App\Models\RequestLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Library\BigCommerce;
@@ -118,8 +119,18 @@ class BigCommerceController extends Controller
         try{
             $callbackResponse = $request->all();
             $orderId = $callbackResponse['data']['id'];
-            $getOrder = $this->bigCommerce->getOrders([], $orderId);
+            RequestLog::create([
+                'endpoint' => 'order/callback',
+                'big_commerce_id' => $orderId,
+                'response_data' => json_encode($request->all()),
+            ]);
 
+            $getOrder = $this->bigCommerce->getOrders([], $orderId);
+            RequestLog::create([
+                'endpoint' => 'bc-order-details',
+                'big_commerce_id' => $orderId,
+                'response_data' => json_encode($getOrder),
+            ]);
             if($getOrder['status_id'] == 7 || $getOrder['status_id'] == 11){
                 // Save Order Details
                 $createOrder = Order::create([
@@ -152,7 +163,13 @@ class BigCommerceController extends Controller
                 $merlinJsonPayload = $this->getMerlinJsonPayload($orderItems, $getOrder);
                 $merlinPayload = $this->generateXmlPayload($merlinJsonPayload);
                 $merlinResponse = Merlin::setOrder($merlinPayload);
-
+                RequestLog::create([
+                    'endpoint' => 'set-merlin-order',
+                    'big_commerce_id' => $orderId,
+                    'merlin_id' => $merlinResponse['message'] ?? NULL,
+                    'request_data' => json_encode($merlinPayload),
+                    'response_data' => json_encode($merlinResponse),
+                ]);
                 if(isset($merlinResponse['code']) && $merlinResponse['code'] == "0"){
                     // Update order status on BigCommerce side
                     $updateProductPayload = [
