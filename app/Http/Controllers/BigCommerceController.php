@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Library\Merlin;
 use App\Models\Order;
 use App\Models\MerlinCustomer;
+use App\Models\RequestLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Library\BigCommerce;
@@ -118,8 +119,9 @@ class BigCommerceController extends Controller
         try{
             $callbackResponse = $request->all();
             $orderId = $callbackResponse['data']['id'];
+            $this->addRequestLogs('order/callback', $orderId, NULL, NULL, $request->all());
             $getOrder = $this->bigCommerce->getOrders([], $orderId);
-
+            $this->addRequestLogs('bc-order-details', $orderId, NULL, NULL, $getOrder);
             if($getOrder['status_id'] == 7 || $getOrder['status_id'] == 11){
                 // Save Order Details
                 $createOrder = Order::create([
@@ -152,7 +154,8 @@ class BigCommerceController extends Controller
                 $merlinJsonPayload = $this->getMerlinJsonPayload($orderItems, $getOrder);
                 $merlinPayload = $this->generateXmlPayload($merlinJsonPayload);
                 $merlinResponse = Merlin::setOrder($merlinPayload);
-
+                
+                $this->addRequestLogs('set-merlin-order', $orderId, $merlinResponse['message'] ?? NULL, $merlinPayload, $merlinResponse);
                 if(isset($merlinResponse['code']) && $merlinResponse['code'] == "0"){
                     // Update order status on BigCommerce side
                     $updateProductPayload = [
@@ -176,6 +179,15 @@ class BigCommerceController extends Controller
     }
 
 
+    public function addRequestLogs($endpoint, $orderId, $merlinId = NULL, $requestData = NULL, $responseData = NULL){
+        RequestLog::create([
+            'endpoint' => $endpoint,
+            'big_commerce_id' => $orderId,
+            'merlin_id' => $merlinId,
+            'request_data' => json_encode($requestData),
+            'response_data' => json_encode($responseData),
+        ]);
+    }
     public function getMerlinJsonPayload($orderItems, $getOrder) {
         try{
             $checkCustomer = MerlinCustomer::where('big_commerce_id', $getOrder['customer_id'])->first();
