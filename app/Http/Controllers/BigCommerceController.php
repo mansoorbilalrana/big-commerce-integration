@@ -122,7 +122,7 @@ class BigCommerceController extends Controller
             $this->addRequestLogs('order/callback', $orderId, NULL, NULL, $request->all());
             $getOrder = $this->bigCommerce->getOrders([], $orderId);
             $this->addRequestLogs('bc-order-details', $orderId, NULL, NULL, $getOrder);
-            if($getOrder['status_id'] == 7 || $getOrder['status_id'] == 11){
+            if(($getOrder['status_id'] == 7 || $getOrder['status_id'] == 11) && !Order::where('order_id', $orderId)->exists()){
                 // Save Order Details
                 $createOrder = Order::create([
                     "order_id" => $orderId,
@@ -154,7 +154,7 @@ class BigCommerceController extends Controller
                 $merlinJsonPayload = $this->getMerlinJsonPayload($orderItems, $getOrder);
                 $merlinPayload = $this->generateXmlPayload($merlinJsonPayload);
                 $merlinResponse = Merlin::setOrder($merlinPayload);
-                
+
                 $this->addRequestLogs('set-merlin-order', $orderId, $merlinResponse['message'] ?? NULL, $merlinPayload, $merlinResponse);
                 if(isset($merlinResponse['code']) && $merlinResponse['code'] == "0"){
                     // Update order status on BigCommerce side
