@@ -119,18 +119,9 @@ class BigCommerceController extends Controller
         try{
             $callbackResponse = $request->all();
             $orderId = $callbackResponse['data']['id'];
-            RequestLog::create([
-                'endpoint' => 'order/callback',
-                'big_commerce_id' => $orderId,
-                'response_data' => json_encode($request->all()),
-            ]);
-
+            $this->addRequestLogs('order/callback', $orderId, NULL, NULL, $request->all());
             $getOrder = $this->bigCommerce->getOrders([], $orderId);
-            RequestLog::create([
-                'endpoint' => 'bc-order-details',
-                'big_commerce_id' => $orderId,
-                'response_data' => json_encode($getOrder),
-            ]);
+            $this->addRequestLogs('bc-order-details', $orderId, NULL, NULL, $getOrder);
             if($getOrder['status_id'] == 7 || $getOrder['status_id'] == 11){
                 // Save Order Details
                 $createOrder = Order::create([
@@ -163,13 +154,8 @@ class BigCommerceController extends Controller
                 $merlinJsonPayload = $this->getMerlinJsonPayload($orderItems, $getOrder);
                 $merlinPayload = $this->generateXmlPayload($merlinJsonPayload);
                 $merlinResponse = Merlin::setOrder($merlinPayload);
-                RequestLog::create([
-                    'endpoint' => 'set-merlin-order',
-                    'big_commerce_id' => $orderId,
-                    'merlin_id' => $merlinResponse['message'] ?? NULL,
-                    'request_data' => json_encode($merlinPayload),
-                    'response_data' => json_encode($merlinResponse),
-                ]);
+                
+                $this->addRequestLogs('set-merlin-order', $orderId, $merlinResponse['message'] ?? NULL, $merlinPayload, $merlinResponse);
                 if(isset($merlinResponse['code']) && $merlinResponse['code'] == "0"){
                     // Update order status on BigCommerce side
                     $updateProductPayload = [
@@ -193,6 +179,15 @@ class BigCommerceController extends Controller
     }
 
 
+    public function addRequestLogs($endpoint, $orderId, $merlinId = NULL, $requestData = NULL, $responseData = NULL){
+        RequestLog::create([
+            'endpoint' => $endpoint,
+            'big_commerce_id' => $orderId,
+            'merlin_id' => $merlinId,
+            'request_data' => json_encode($requestData),
+            'response_data' => json_encode($responseData),
+        ]);
+    }
     public function getMerlinJsonPayload($orderItems, $getOrder) {
         try{
             $checkCustomer = MerlinCustomer::where('big_commerce_id', $getOrder['customer_id'])->first();
