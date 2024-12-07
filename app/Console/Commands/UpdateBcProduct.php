@@ -41,6 +41,7 @@ class UpdateBcProduct extends Command
                     $this->bigCommerceProductUpdate($batch);
                 }
             });
+        return $this->comment('Job executed successfully.');
     }
 
     protected function bigCommerceProductUpdate(array $batch) {

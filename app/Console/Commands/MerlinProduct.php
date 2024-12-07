@@ -33,79 +33,83 @@ class MerlinProduct extends Command
      */
     public function handle()
     {
-        $getExistingProducts = Product::get();
-        $start = 0;
-        $results = 100; // Number of results per request
-        $allProducts = []; // To store all the products
+        try{
+            $getExistingProducts = Product::get();
+            $start = 0;
+            $results = 100; // Number of results per request
+            $allProducts = []; // To store all the products
 
-        // Loop to handle pagination
-        while (true) {
-            // Generate XML Payload for current start and results
-            $payload = $this->generateXmlPayload($start, $results);
+            // Loop to handle pagination
+            while (true) {
+                // Generate XML Payload for current start and results
+                $payload = $this->generateXmlPayload($start, $results);
 
-            // Get products for this chunk
-            $merlinProducts = $this->getMerlinProducts($payload);
+                // Get products for this chunk
+                $merlinProducts = $this->getMerlinProducts($payload);
 
-            // If no products are returned, break the loop
-            if (empty($merlinProducts['items'])) {
-                break;
-            }
+                // If no products are returned, break the loop
+                if (empty($merlinProducts['items'])) {
+                    break;
+                }
 
-            // Process products
-            foreach ($merlinProducts['items'] as $product) {
-                $prodSku = $product['sku'];
-                $chkProd = $getExistingProducts->where('sku_id', $prodSku)->first();
+                // Process products
+                foreach ($merlinProducts['items'] as $product) {
+                    $prodSku = $product['sku'];
+                    $chkProd = $getExistingProducts->where('sku_id', $prodSku)->first();
 
-                // Check if the product exists in database
-                if (!is_null($chkProd)) {
-                    $allProducts[] = [
-                        'sku_id' => $chkProd->sku_id,
-                        'product_id' => $chkProd->product_id,
-                        'quantity' => $product['qty_free'],
-                        'created_at' => $chkProd->created_at,
-                        'updated_at' => now(),
-                    ];
-                } else {
-                    // Fetch product from BigCommerce
-                    $bigCommerce = new \App\Library\BigCommerce();
-                    $bigCommerceProd = $bigCommerce->getProducts(['sku' => $prodSku]);
-
-                    if (count($bigCommerceProd['data']) > 0) {
-                        $productId = $bigCommerceProd['data'][0]['id'];
-
+                    // Check if the product exists in database
+                    if (!is_null($chkProd)) {
                         $allProducts[] = [
-                            'sku_id' => $prodSku,
-                            'product_id' => $productId,
+                            'sku_id' => $chkProd->sku_id,
+                            'product_id' => $chkProd->product_id,
                             'quantity' => $product['qty_free'],
-                            'created_at' => now(),
+                            'created_at' => $chkProd->created_at,
                             'updated_at' => now(),
                         ];
+                    } else {
+                        // Fetch product from BigCommerce
+                        $bigCommerce = new \App\Library\BigCommerce();
+                        $bigCommerceProd = $bigCommerce->getProducts(['sku' => $prodSku]);
+
+                        if (count($bigCommerceProd['data']) > 0) {
+                            $productId = $bigCommerceProd['data'][0]['id'];
+
+                            $allProducts[] = [
+                                'sku_id' => $prodSku,
+                                'product_id' => $productId,
+                                'quantity' => $product['qty_free'],
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ];
+                        }
                     }
+                }
+
+                $start += $results;
+
+                if (count($allProducts) >= 100) {
+                    DB::table('products')->upsert(
+                        $allProducts,
+                        ['sku_id'],
+                        ['product_id', 'quantity', 'created_at', 'updated_at']
+                    );
+
+                    $allProducts = [];
                 }
             }
 
-            $start += $results;
-
-            if (count($allProducts) >= 100) {
+            // If there are any remaining products after the loop, upsert them
+            if (count($allProducts) > 0) {
                 DB::table('products')->upsert(
                     $allProducts,
                     ['sku_id'],
                     ['product_id', 'quantity', 'created_at', 'updated_at']
                 );
-
-                $allProducts = [];
             }
+            return $this->comment('Job executed successfully.');
+        } catch (\Exception $e) {
+            return 'Error: ' . $e->getMessage();
         }
-
-        // If there are any remaining products after the loop, upsert them
-        if (count($allProducts) > 0) {
-            DB::table('products')->upsert(
-                $allProducts,
-                ['sku_id'],
-                ['product_id', 'quantity', 'created_at', 'updated_at']
-            );
-        }
-
     }
 
     public function getMerlinProducts($payload) {
