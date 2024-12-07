@@ -121,7 +121,7 @@ class BigCommerceController extends Controller
             $orderId = $callbackResponse['data']['id'];
             $getOrder = $this->bigCommerce->getOrders([], $orderId);
             if(!Order::where('order_id', $orderId)->exists() && ($getOrder['status_id'] == 7 || $getOrder['status_id'] == 11)){
-                $this->addRequestLogs('order-status/callback', $orderId, NULL, NULL, $request->all());
+                $this->addRequestLogs($callbackResponse['data']['scope'] ?? 'order-callback', $orderId, NULL, NULL, $request->all());
                 $this->addRequestLogs('bc-order-details', $orderId, NULL, NULL, $getOrder);
                 // Save Order Details
                 $createOrder = Order::create([
