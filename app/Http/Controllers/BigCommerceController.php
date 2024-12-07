@@ -119,10 +119,10 @@ class BigCommerceController extends Controller
         try{
             $callbackResponse = $request->all();
             $orderId = $callbackResponse['data']['id'];
-            $this->addRequestLogs('order/callback', $orderId, NULL, NULL, $request->all());
             $getOrder = $this->bigCommerce->getOrders([], $orderId);
-            $this->addRequestLogs('bc-order-details', $orderId, NULL, NULL, $getOrder);
-            if(($getOrder['status_id'] == 7 || $getOrder['status_id'] == 11) && !Order::where('order_id', $orderId)->exists()){
+            if(!Order::where('order_id', $orderId)->exists() && ($getOrder['status_id'] == 7 || $getOrder['status_id'] == 11)){
+                $this->addRequestLogs('order-status/callback', $orderId, NULL, NULL, $request->all());
+                $this->addRequestLogs('bc-order-details', $orderId, NULL, NULL, $getOrder);
                 // Save Order Details
                 $createOrder = Order::create([
                     "order_id" => $orderId,
@@ -171,6 +171,7 @@ class BigCommerceController extends Controller
                 }
                 return response()->json(['order'=> $getOrder, 'products'=> $productInfo, 'updated_order'=> $updateOrder, 'merlin_response' => $merlinResponse]);
             }
+
             return true;
 
         }catch (\Exception $e) {
