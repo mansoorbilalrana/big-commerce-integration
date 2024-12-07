@@ -87,14 +87,16 @@ class BigCommerce
     /**
      * Get All products from BigCommerce.
      *
-     * @param array $data
-     * @return array|string
+     * @param array $params
+     * @return array|string |mixed
      */
-    public function getProducts($data)
+    public function getProducts($params=[])
     {
         try {
             // Send PUT request to update an order
-            $response = $this->client->get('v3/catalog/products', []);
+            $response = $this->client->get('v3/catalog/products', [
+                'query' => $params
+            ]);
 
             return json_decode($response->getBody()->getContents(), true);
         } catch (RequestException $e) {
@@ -112,7 +114,7 @@ class BigCommerce
     {
         try {
             // Send PUT request to update an order
-            $response = $this->client->get('v3/catalog/products/'.$data['id'], [
+            $response = $this->client->put('v3/catalog/products', [
                 'json' => $data,
             ]);
 
