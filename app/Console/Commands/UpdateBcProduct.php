@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Http\Controllers\BigCommerceController;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -30,6 +31,9 @@ class UpdateBcProduct extends Command
         // Set up batch size
         $batchSize = 10;
 
+        $bigCommerceController = new BigCommerceController();
+        $bigCommerceController->addRequestLogs('job/update-bc-product', NULL);
+        
         DB::table('products')
             ->select('id', 'sku_id', 'product_id', 'quantity')
              ->orderBy('id')

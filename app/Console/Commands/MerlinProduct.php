@@ -2,12 +2,11 @@
 
 namespace App\Console\Commands;
 
+use App\Http\Controllers\BigCommerceController;
 use Illuminate\Console\Command;
 use App\Library\Merlin;
-use App\Library\BigCommerce;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
-use stdClass;
 
 
 class MerlinProduct extends Command
@@ -34,6 +33,9 @@ class MerlinProduct extends Command
     public function handle()
     {
         try{
+            $bigCommerceController = new BigCommerceController();
+            $bigCommerceController->addRequestLogs('job/add-merlin-stock', NULL);
+            
             $getExistingProducts = Product::get();
             $start = 0;
             $results = 100; // Number of results per request
