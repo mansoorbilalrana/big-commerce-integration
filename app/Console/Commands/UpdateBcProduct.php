@@ -33,9 +33,10 @@ class UpdateBcProduct extends Command
 
         $bigCommerceController = new BigCommerceController();
         $bigCommerceController->addRequestLogs('job/update-bc-product', NULL);
-        
+
         DB::table('products')
             ->select('id', 'sku_id', 'product_id', 'quantity')
+            ->whereNotNull('product_id')
              ->orderBy('id')
             ->chunk(100, function ($products) use ($batchSize) {
                 // Divide the chunk into batches of 10

@@ -35,7 +35,7 @@ class MerlinProduct extends Command
         try{
             $bigCommerceController = new BigCommerceController();
             $bigCommerceController->addRequestLogs('job/add-merlin-stock', NULL);
-            
+
             $getExistingProducts = Product::get();
             $start = 0;
             $results = 100; // Number of results per request
@@ -63,7 +63,7 @@ class MerlinProduct extends Command
                     if (!is_null($chkProd)) {
                         $allProducts[] = [
                             'sku_id' => $chkProd->sku_id,
-                            'product_id' => $chkProd->product_id,
+                            'product_id' => $chkProd->product_id ?? NULL,
                             'quantity' => $product['qty_free'],
                             'created_at' => $chkProd->created_at,
                             'updated_at' => now(),
@@ -79,6 +79,14 @@ class MerlinProduct extends Command
                             $allProducts[] = [
                                 'sku_id' => $prodSku,
                                 'product_id' => $productId,
+                                'quantity' => $product['qty_free'],
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ];
+                        }else{
+                            $allProducts[] = [
+                                'sku_id' => $prodSku,
+                                'product_id' => NULL,
                                 'quantity' => $product['qty_free'],
                                 'created_at' => now(),
                                 'updated_at' => now(),
