@@ -56,7 +56,16 @@ return [
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
             'throw' => false,
         ],
-
+        'ftp' => [
+            'driver'   => 'ftp',
+            'host'     => 'ftp1.toolbank.com', // FTP server address
+            'username' => 'Signet_12820',      // FTP username
+            'password' => 'L25Wb',             // FTP password
+            'port'     => 21,                  // Default FTP port (optional)
+            'root'     => '',                  // FTP root directory (optional)
+            'passive'  => true,                // Passive mode (optional)
+            'timeout'  => 30,                  // Timeout in seconds (optional)
+        ],
     ],
 
     /*
