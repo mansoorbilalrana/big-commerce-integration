@@ -72,39 +72,40 @@ class FetchFTPData extends Command
             if (count($columns) > 1) {
                 $sku = $columns[0];         // Column 1: SKU
                 $inventory = $columns[1];   // Column 2: Inventory
+                if($inventory != ""){
+                    // To store all the products
+                    $chkProd = $inventoryProducts->where('sku_id', $sku)->first();
 
-                // To store all the products
-                $chkProd = $inventoryProducts->where('sku_id', $sku)->first();
-
-                    // Check if the product exists in database
-                if (!is_null($chkProd)) {
-                    $allProducts[] = [
-                        'sku_id' => $chkProd->sku_id,
-                        'product_id' => $chkProd->product_id ?? NULL,
-                        'quantity' => $inventory ?: 0,
-                        'type' => 'quantity',
-                        'created_at' => $chkProd->created_at,
-                        'updated_at' => now(),
-                    ];
-                } else {
-                    // Fetch product from BigCommerce
-                    $bigCommerce = new \App\Library\BigCommerce();
-                    $bigCommerceProd = $bigCommerce->getProducts(['sku' => $sku]);
-
-                    if (is_array($bigCommerceProd['data']) && count($bigCommerceProd['data']) > 0) {
-                        $productId = $bigCommerceProd['data'][0]['id'];
-
+                        // Check if the product exists in database
+                    if (!is_null($chkProd)) {
                         $allProducts[] = [
-                            'sku_id' => $sku,
-                            'product_id' => $productId,
+                            'sku_id' => $chkProd->sku_id,
+                            'product_id' => $chkProd->product_id ?? NULL,
                             'quantity' => $inventory ?: 0,
                             'type' => 'quantity',
-                            'created_at' => now(),
+                            'created_at' => $chkProd->created_at,
                             'updated_at' => now(),
                         ];
-                    }
-                    else if(!is_array($bigCommerceProd['data'])){
-                        $bigCommerceController->addRequestLogs('job/get-bc-product', NULL);
+                    } else {
+                        // Fetch product from BigCommerce
+                        $bigCommerce = new \App\Library\BigCommerce();
+                        $bigCommerceProd = $bigCommerce->getProducts(['sku' => $sku]);
+
+                        if (is_array($bigCommerceProd['data']) && count($bigCommerceProd['data']) > 0) {
+                            $productId = $bigCommerceProd['data'][0]['id'];
+
+                            $allProducts[] = [
+                                'sku_id' => $sku,
+                                'product_id' => $productId,
+                                'quantity' => $inventory ?: 0,
+                                'type' => 'quantity',
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ];
+                        }
+                        else if(!is_array($bigCommerceProd['data'])){
+                            $bigCommerceController->addRequestLogs('job/get-bc-product', NULL);
+                        }
                     }
                 }
                 if (count($allProducts) >= 100) {
@@ -140,7 +141,9 @@ class FetchFTPData extends Command
 
             if (count($columns) > 2) {
                 $sku = $columns[1];       // Column 2: SKU
-                $costPrice =  (($columns[2] * 1.2) + 4) * 1.25;
+                if($columns[2] != ""){
+                    $costPrice =  (((float) $columns[2] * 1.2) + 4) * 1.25;
+                }
 
                 // To store all the products
                 $chkProd = $inventoryProducts->where('sku_id', $sku)->first();

@@ -78,7 +78,7 @@ class UpdateBcImportProduct extends Command
             }else if($product->type == 'price'){
                 $payload[] = [
                     'id' => $product->product_id, // BigCommerce product ID
-                    'inventory_level' => $product->price, // Product inventory level to update
+                    'price' => $product->price, // Product inventory level to update
                 ];
             }
 
