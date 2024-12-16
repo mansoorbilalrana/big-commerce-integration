@@ -58,9 +58,9 @@ return [
         ],
         'ftp' => [
             'driver'   => 'ftp',
-            'host'     => 'ftp1.toolbank.com', // FTP server address
-            'username' => 'Signet_12820',      // FTP username
-            'password' => 'L25Wb',             // FTP password
+            'host'     => env('FTP_HOST'), // FTP server address
+            'username' => env('FTP_USERNAME'),      // FTP username
+            'password' => env('FTP_PASSWORD'),             // FTP password
             'port'     => 21,                  // Default FTP port (optional)
             'root'     => '',                  // FTP root directory (optional)
             'passive'  => true,                // Passive mode (optional)
