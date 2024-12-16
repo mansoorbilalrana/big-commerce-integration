@@ -56,7 +56,16 @@ return [
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
             'throw' => false,
         ],
-
+        'ftp' => [
+            'driver'   => 'ftp',
+            'host'     => env('FTP_HOST'), // FTP server address
+            'username' => env('FTP_USERNAME'),      // FTP username
+            'password' => env('FTP_PASSWORD'),             // FTP password
+            'port'     => 21,                  // Default FTP port (optional)
+            'root'     => '',                  // FTP root directory (optional)
+            'passive'  => true,                // Passive mode (optional)
+            'timeout'  => 30,                  // Timeout in seconds (optional)
+        ],
     ],
 
     /*

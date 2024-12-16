@@ -35,7 +35,7 @@ class MerlinProduct extends Command
         try{
             $bigCommerceController = new BigCommerceController();
             $bigCommerceController->addRequestLogs('job/add-merlin-stock', NULL);
-            
+
             $getExistingProducts = Product::get();
             $start = 0;
             $results = 100; // Number of results per request
@@ -63,7 +63,7 @@ class MerlinProduct extends Command
                     if (!is_null($chkProd)) {
                         $allProducts[] = [
                             'sku_id' => $chkProd->sku_id,
-                            'product_id' => $chkProd->product_id,
+                            'product_id' => $chkProd->product_id ?? NULL,
                             'quantity' => $product['qty_free'],
                             'created_at' => $chkProd->created_at,
                             'updated_at' => now(),
@@ -73,7 +73,7 @@ class MerlinProduct extends Command
                         $bigCommerce = new \App\Library\BigCommerce();
                         $bigCommerceProd = $bigCommerce->getProducts(['sku' => $prodSku]);
 
-                        if (count($bigCommerceProd['data']) > 0) {
+                        if (is_array($bigCommerceProd['data']) && count($bigCommerceProd['data']) > 0) {
                             $productId = $bigCommerceProd['data'][0]['id'];
 
                             $allProducts[] = [
@@ -84,6 +84,18 @@ class MerlinProduct extends Command
                                 'updated_at' => now(),
                             ];
                         }
+                        else if(!is_array($bigCommerceProd['data'])){
+                            $bigCommerceController->addRequestLogs('job/get-bc-product', NULL);
+                        }
+                        // else{
+                        //     $allProducts[] = [
+                        //         'sku_id' => $prodSku,
+                        //         'product_id' => NULL,
+                        //         'quantity' => $product['qty_free'],
+                        //         'created_at' => now(),
+                        //         'updated_at' => now(),
+                        //     ];
+                        // }
                     }
                 }
 

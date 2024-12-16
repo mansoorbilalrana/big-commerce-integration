@@ -146,7 +146,8 @@ class BigCommerceController extends Controller
                         $item->part = $product['sku'];
                         $item->depot = 'DONC';
                         $item->quantity = $product['quantity'];
-                        $item->price = $product['total_inc_tax'];
+                        $item->price = $product['price_inc_tax'];
+                        $item->vat_inc = 'Y';
                         array_push($orderItems, $item);
                     }
                 }
@@ -271,6 +272,7 @@ class BigCommerceController extends Controller
                     $itemXml->addChild('depot', $item->depot);
                     $itemXml->addChild('quantity', $item->quantity);
                     $itemXml->addChild('price', $item->price);
+                    $itemXml->addChild('vat_inc', $item->vat_inc);
                 }
             }
 
