@@ -146,8 +146,10 @@ class BigCommerceController extends Controller
                         $item->part = $product['sku'];
                         $item->depot = 'DONC';
                         $item->quantity = $product['quantity'];
-                        $item->price = $product['price_inc_tax'];
-                        $item->vat_inc = 'Y';
+                        $item->price = $product['price_ex_tax'];
+                        $item->vat_inc = 'N';
+                        $item->vat_code = '1';
+                        $item->disc1 = $product['applied_discounts'] ?? 0;
                         array_push($orderItems, $item);
                     }
                 }
@@ -217,7 +219,7 @@ class BigCommerceController extends Controller
                 //
                 "due_date" => Carbon::parse($getOrder['date_created'])->format('Y-m-d'),
                 "ref" => $getOrder['id'],
-                "carriage" => $getOrder['shipping_cost_inc_tax'],
+                "carriage" => $getOrder['shipping_cost_ex_tax'],
                 "webref1" => "",
                 "webref2" => "",
                 "contactname" => $getOrder['billing_address']['first_name'].' '.$getOrder['billing_address']['last_name'],
@@ -273,6 +275,8 @@ class BigCommerceController extends Controller
                     $itemXml->addChild('quantity', $item->quantity);
                     $itemXml->addChild('price', $item->price);
                     $itemXml->addChild('vat_inc', $item->vat_inc);
+                    $itemXml->addChild('vat_code', $item->vat_code);
+                    $itemXml->addChild('disc1', $item->disc1);
                 }
             }
 
