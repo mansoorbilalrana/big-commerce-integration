@@ -283,7 +283,9 @@ class BigCommerceController extends Controller
                     $itemXml->addChild('price', $item->price);
                     $itemXml->addChild('vat_inc', $item->vat_inc);
                     $itemXml->addChild('vat_code', $item->vat_code);
-                    $itemXml->addChild('disc1', $item->disc1);
+                    if(isset($item->disc1)){
+                        $itemXml->addChild('disc1', $item->disc1);
+                    }
                 }
             }
 
