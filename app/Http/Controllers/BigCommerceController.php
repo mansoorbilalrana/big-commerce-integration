@@ -149,7 +149,7 @@ class BigCommerceController extends Controller
                         $item->price = $product['price_ex_tax'];
                         $item->vat_inc = 'N';
                         $item->vat_code = '1';
-                        $item->disc1 = $product['applied_discounts'];
+                        $item->disc1 = $product['applied_discounts'] ?? 0;
                         array_push($orderItems, $item);
                     }
                 }
