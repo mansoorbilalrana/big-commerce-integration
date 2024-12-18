@@ -149,14 +149,14 @@ class BigCommerceController extends Controller
                         $item->price = $product['price_ex_tax'];
                         $item->vat_inc = 'N';
                         $item->vat_code = '1';
-                        if(is_array($product['applied_discounts']) && count($product['applied_discounts']) > 0){
-                            $discAmount = 0;
-                            foreach($product['applied_discounts'] as $key=>$discount){
-                                $getDisc = $discount['amount'] ?? 0;
-                                $discAmount= $discAmount + $getDisc;
-                            }
-                            $item->disc1 = $discAmount;
-                        }
+                        // if(is_array($product['applied_discounts']) && count($product['applied_discounts']) > 0){
+                        //     $discAmount = 0;
+                        //     foreach($product['applied_discounts'] as $key=>$discount){
+                        //         $getDisc = $discount['amount'] ?? 0;
+                        //         $discAmount= $discAmount + $getDisc;
+                        //     }
+                        //     $item->disc1 = $discAmount;
+                        // }
                         array_push($orderItems, $item);
                     }
                 }
