@@ -8,6 +8,6 @@ Schedule::command('app:add-merlin-stock')->twiceDaily(1, 13)->after(function () 
     Artisan::call('app:update-bc-product');
 });
 
-Schedule::command('app:fetch-ftp-data')->twiceDaily(1, 13)->after(function () {
+Schedule::command('app:fetch-ftp-data')->twiceDaily(3, 15)->after(function () {
     Artisan::call('app:update-bc-import-product');
 });
