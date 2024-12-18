@@ -67,6 +67,9 @@ class FetchFTPData extends Command
 
         $inventoryProducts = ImportProduct::where('type','quantity')->get();
         foreach ($rows as $row) {
+            if (trim($row) === '') {
+                continue; // Skip empty lines
+            }
             $columns = str_getcsv($row); // Convert row into an array
 
             if (count($columns) > 1) {
@@ -137,6 +140,9 @@ class FetchFTPData extends Command
         $inventoryProducts = ImportProduct::where('type','price')->get();
 
         foreach ($rows as $row) {
+            if (trim($row) === '') {
+                continue; // Skip empty lines
+            }
             $columns = str_getcsv($row); // Convert row into an array
 
             if (count($columns) > 2) {
