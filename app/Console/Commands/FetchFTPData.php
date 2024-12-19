@@ -66,7 +66,7 @@ class FetchFTPData extends Command
         $allProducts = [];
 
         $inventoryProducts = ImportProduct::where('type','quantity')->get();
-        foreach ($rows as $row) {
+        foreach ($rows as $key => $row) {
             if (trim($row) === '') {
                 continue; // Skip empty lines
             }
@@ -75,7 +75,8 @@ class FetchFTPData extends Command
             if (count($columns) > 1) {
                 $sku = $columns[0];         // Column 1: SKU
                 $inventory = $columns[1];   // Column 2: Inventory
-                if($inventory != ""){
+                $this->info("Record no: ".$key."  New Quantity Added: ".$sku.'&&&&'. $inventory);
+                // if($inventory != ""){
                     // To store all the products
                     $chkProd = $inventoryProducts->where('sku_id', $sku)->first();
 
@@ -94,7 +95,7 @@ class FetchFTPData extends Command
                         $bigCommerce = new \App\Library\BigCommerce();
                         $bigCommerceProd = $bigCommerce->getProducts(['sku' => $sku]);
 
-                        if (is_array($bigCommerceProd['data']) && count($bigCommerceProd['data']) > 0) {
+                        if (is_array($bigCommerceProd) && isset($bigCommerceProd['data']) && is_array($bigCommerceProd['data']) && count($bigCommerceProd['data']) > 0) {
                             $productId = $bigCommerceProd['data'][0]['id'];
 
                             $allProducts[] = [
@@ -106,11 +107,11 @@ class FetchFTPData extends Command
                                 'updated_at' => now(),
                             ];
                         }
-                        else if(!is_array($bigCommerceProd['data'])){
-                            $bigCommerceController->addRequestLogs('job/get-bc-product', NULL);
+                        else if(!is_array($bigCommerceProd)){
+                            $bigCommerceController->addRequestLogs('job/bc-product-error', NULL, NULL, NULL, $bigCommerceProd);
                         }
                     }
-                }
+                // }
                 if (count($allProducts) >= 100) {
                     DB::table('import_products')->upsert(
                         $allProducts,
@@ -139,7 +140,7 @@ class FetchFTPData extends Command
         $allProducts = [];
         $inventoryProducts = ImportProduct::where('type','price')->get();
 
-        foreach ($rows as $row) {
+        foreach ($rows as $key => $row) {
             if (trim($row) === '') {
                 continue; // Skip empty lines
             }
@@ -147,6 +148,7 @@ class FetchFTPData extends Command
 
             if (count($columns) > 2) {
                 $sku = $columns[1];       // Column 2: SKU
+                $this->info("Record no: ".$key."  New Quantity Added: ".$sku.'&&&&'. $columns[2]);
                 if($columns[2] != ""){
                     $costPrice =  (((float) $columns[2] * 1.2) + 4) * 1.25;
                 }
@@ -169,7 +171,7 @@ class FetchFTPData extends Command
                     $bigCommerce = new \App\Library\BigCommerce();
                     $bigCommerceProd = $bigCommerce->getProducts(['sku' => $sku]);
 
-                    if (is_array($bigCommerceProd['data']) && count($bigCommerceProd['data']) > 0) {
+                    if (is_array($bigCommerceProd) && isset($bigCommerceProd['data']) && is_array($bigCommerceProd['data']) && count($bigCommerceProd['data']) > 0) {
                         $productId = $bigCommerceProd['data'][0]['id'];
 
                         $allProducts[] = [
@@ -181,8 +183,8 @@ class FetchFTPData extends Command
                             'updated_at' => now(),
                         ];
                     }
-                    else if(!is_array($bigCommerceProd['data'])){
-                        $bigCommerceController->addRequestLogs('job/get-bc-product', NULL);
+                    else if(!is_array($bigCommerceProd)){
+                        $bigCommerceController->addRequestLogs('job/bc-product-error', NULL, NULL, NULL, $bigCommerceProd);
                     }
                 }
                 if (count($allProducts) >= 100) {
