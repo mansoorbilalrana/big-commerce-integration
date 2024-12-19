@@ -73,7 +73,7 @@ class MerlinProduct extends Command
                         $bigCommerce = new \App\Library\BigCommerce();
                         $bigCommerceProd = $bigCommerce->getProducts(['sku' => $prodSku]);
 
-                        if (is_array($bigCommerceProd['data']) && count($bigCommerceProd['data']) > 0) {
+                        if (is_array($bigCommerceProd) && isset($bigCommerceProd['data']) && is_array($bigCommerceProd['data']) && count($bigCommerceProd['data']) > 0) {
                             $productId = $bigCommerceProd['data'][0]['id'];
 
                             $allProducts[] = [
@@ -84,8 +84,8 @@ class MerlinProduct extends Command
                                 'updated_at' => now(),
                             ];
                         }
-                        else if(!is_array($bigCommerceProd['data'])){
-                            $bigCommerceController->addRequestLogs('job/get-bc-product', NULL);
+                        else if(!is_array($bigCommerceProd)){
+                            $bigCommerceController->addRequestLogs('job/bc-product-error', NULL, NULL, NULL, $bigCommerceProd);
                         }
                         // else{
                         //     $allProducts[] = [
