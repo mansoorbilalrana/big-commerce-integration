@@ -35,47 +35,45 @@ class UpdateBcImportProduct extends Command
 
         // To update inventory and price for different sets of products, send separate requests for each set.
         DB::table('import_products')
-            ->select('id', 'sku_id', 'product_id', 'quantity','price','type' )
+            ->select('id', 'sku_id', 'product_id', 'quantity','price' )
             ->whereNotNull('product_id')
             ->whereNotNull('quantity')
-            ->where('type','quantity')
              ->orderBy('id')
             ->chunk(100, function ($products) use ($batchSize) {
                 // Divide the chunk into batches of 10
                 $batches = array_chunk($products->toArray(), $batchSize);
 
                 foreach ($batches as $batch) {
-                    $this->bigCommerceProductUpdate($batch);
+                    $this->bigCommerceProductUpdate($batch, 'quantity');
                 }
             });
         DB::table('import_products')
-            ->select('id', 'sku_id', 'product_id', 'quantity','price','type' )
+            ->select('id', 'sku_id', 'product_id', 'quantity','price' )
             ->whereNotNull('product_id')
             ->whereNotNull('price')
-            ->where('type','price')
              ->orderBy('id')
             ->chunk(100, function ($products) use ($batchSize) {
                 // Divide the chunk into batches of 10
                 $batches = array_chunk($products->toArray(), $batchSize);
 
                 foreach ($batches as $batch) {
-                    $this->bigCommerceProductUpdate($batch);
+                    $this->bigCommerceProductUpdate($batch, 'price');
                 }
             });
         return $this->comment('Job executed successfully.');
     }
 
-    protected function bigCommerceProductUpdate(array $batch) {
+    protected function bigCommerceProductUpdate(array $batch, $type) {
       // Prepare the payload for the BigCommerce API
         $payload = [];
 
         foreach ($batch as $product) {
-            if($product->type == 'quantity') {
+            if($type == 'quantity') {
                 $payload[] = [
                     'id' => $product->product_id, // BigCommerce product ID
                     'inventory_level' => $product->quantity, // Product inventory level to update
                 ];
-            }else if($product->type == 'price'){
+            }else if($type == 'price'){
                 $payload[] = [
                     'id' => $product->product_id, // BigCommerce product ID
                     'price' => $product->price, // Product inventory level to update

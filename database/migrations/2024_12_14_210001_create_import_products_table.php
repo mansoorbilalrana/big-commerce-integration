@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('sku_id')->unique();
             $table->string('product_id')->nullable();
-            $table->string('type')->nullable();
             $table->string('quantity')->nullable();
             $table->string('price')->nullable();
             $table->timestamps();
