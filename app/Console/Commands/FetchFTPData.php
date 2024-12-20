@@ -65,7 +65,7 @@ class FetchFTPData extends Command
         $bigCommerceController = new BigCommerceController();
         $allProducts = [];
 
-        $inventoryProducts = ImportProduct::where('type','quantity')->get();
+        $inventoryProducts = ImportProduct::all();
         foreach ($rows as $key => $row) {
             if (trim($row) === '') {
                 continue; // Skip empty lines
@@ -86,7 +86,6 @@ class FetchFTPData extends Command
                             'sku_id' => $chkProd->sku_id,
                             'product_id' => $chkProd->product_id ?? NULL,
                             'quantity' => $inventory ?: 0,
-                            'type' => 'quantity',
                             'created_at' => $chkProd->created_at,
                             'updated_at' => now(),
                         ];
@@ -102,7 +101,6 @@ class FetchFTPData extends Command
                                 'sku_id' => $sku,
                                 'product_id' => $productId,
                                 'quantity' => $inventory ?: 0,
-                                'type' => 'quantity',
                                 'created_at' => now(),
                                 'updated_at' => now(),
                             ];
@@ -116,7 +114,7 @@ class FetchFTPData extends Command
                     DB::table('import_products')->upsert(
                         $allProducts,
                         ['sku_id'],
-                        ['product_id', 'quantity','type', 'created_at', 'updated_at']
+                        ['product_id', 'quantity', 'created_at', 'updated_at']
                     );
 
                     $allProducts = [];
@@ -138,7 +136,7 @@ class FetchFTPData extends Command
         $this->info("Cost CSV: ".count($rows));
         $bigCommerceController = new BigCommerceController();
         $allProducts = [];
-        $inventoryProducts = ImportProduct::where('type','price')->get();
+        $inventoryProducts = ImportProduct::all();
 
         foreach ($rows as $key => $row) {
             if (trim($row) === '') {
@@ -162,7 +160,6 @@ class FetchFTPData extends Command
                         'sku_id' => $chkProd->sku_id,
                         'product_id' => $chkProd->product_id ?? NULL,
                         'price' => $costPrice,
-                        'type' => 'price',
                         'created_at' => $chkProd->created_at,
                         'updated_at' => now(),
                     ];
@@ -178,7 +175,6 @@ class FetchFTPData extends Command
                             'sku_id' => $sku,
                             'product_id' => $productId,
                             'price' => $costPrice,
-                            'type' => 'price',
                             'created_at' => now(),
                             'updated_at' => now(),
                         ];
@@ -191,7 +187,7 @@ class FetchFTPData extends Command
                     DB::table('import_products')->upsert(
                         $allProducts,
                         ['sku_id'],
-                        ['product_id', 'price','type', 'created_at', 'updated_at']
+                        ['product_id', 'price', 'created_at', 'updated_at']
                     );
 
                     $allProducts = [];
