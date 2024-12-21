@@ -138,6 +138,20 @@ class BigCommerce
         return json_decode($response->getBody()->getContents(), true);
     }
 
+    public function getShippingAddress($url)
+    {
+         // Initialize the Guzzle HTTP client
+         $getShippingAddress = new Client([
+            'base_uri' => $url,
+            'headers' => [
+                'X-Auth-Token' => env('BIGCOMMERCE_ACCESS_TOKEN'),
+                'Accept' => 'application/json',
+            ],
+        ]);
+        $response = $getShippingAddress->get('', []);
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
     /**
      * Create a webhook in BigCommerce.
      *

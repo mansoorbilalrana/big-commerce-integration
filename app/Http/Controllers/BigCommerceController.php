@@ -138,6 +138,11 @@ class BigCommerceController extends Controller
                     $productInfo = $this->bigCommerce->getProduct($getOrder['products']['url'] );
                 }
 
+                $shippingAddress = [];
+                if(isset($getOrder['shipping_addresses'])){
+                    $shippingAddress = $this->bigCommerce->getShippingAddress($getOrder['shipping_addresses']['url'] );
+                }
+
                 if(count($productInfo)> 0) {
                     $products = collect($productInfo);
                     $orderItems = [];
@@ -161,7 +166,7 @@ class BigCommerceController extends Controller
                     }
                 }
                 // Prepare Payload & Create Order on Merlin side
-                $merlinJsonPayload = $this->getMerlinJsonPayload($orderItems, $getOrder);
+                $merlinJsonPayload = $this->getMerlinJsonPayload($orderItems, $getOrder, $shippingAddress);
                 $merlinPayload = $this->generateXmlPayload($merlinJsonPayload);
                 $merlinResponse = Merlin::setOrder($merlinPayload);
 
@@ -199,11 +204,12 @@ class BigCommerceController extends Controller
             'response_data' => json_encode($responseData),
         ]);
     }
-    public function getMerlinJsonPayload($orderItems, $getOrder) {
+    public function getMerlinJsonPayload($orderItems, $getOrder, $shippingAddress) {
         try{
             $checkCustomer = MerlinCustomer::where('big_commerce_id', $getOrder['customer_id'])->first();
             $customerId = !is_null($checkCustomer) ? $checkCustomer['merlin_id'] : "5WEB02";
             $invName = $getOrder['billing_address']['company'] != "" ? $getOrder['billing_address']['company'] : $getOrder['billing_address']['first_name'].' '.$getOrder['billing_address']['last_name'];
+            $shippingAddress = count($shippingAddress) > 0 ? $shippingAddress[0] : [];
             $merlinJsonPayload = [
                 "items" => $orderItems,
                 "company" => 1,
@@ -216,13 +222,14 @@ class BigCommerceController extends Controller
                 "inv_county" => $getOrder['billing_address']['country_iso2'],
                 "inv_country" => $getOrder['billing_address']['country'],
                 "inv_postcode" => $getOrder['billing_address']['zip'],
-                "del_name" => $getOrder['billing_address']['first_name'].' '.$getOrder['billing_address']['last_name'],
-                "del_add1" => $getOrder['billing_address']['street_1'],
-                "del_add2" => $getOrder['billing_address']['street_2'],
-                "del_city" => $getOrder['billing_address']['city'],
-                "del_county" => $getOrder['billing_address']['country_iso2'],
-                "del_country" => $getOrder['billing_address']['country'],
-                "del_postcode" => $getOrder['billing_address']['zip'],
+                "del_account" => $customerId,
+                "del_name" => isset($shippingAddress['first_name']) ? $shippingAddress['first_name'].' '.$shippingAddress['last_name'] : $getOrder['billing_address']['first_name'].' '.$getOrder['billing_address']['last_name'],
+                "del_add1" => isset($shippingAddress['street_1']) ? $shippingAddress['street_1'] : $getOrder['billing_address']['street_1'],
+                "del_add2" => isset($shippingAddress['street_2']) ? $shippingAddress['street_2'] : $getOrder['billing_address']['street_2'],
+                "del_city" => isset($shippingAddress['city']) ? $shippingAddress['city'] : $getOrder['billing_address']['city'],
+                "del_county" => isset($shippingAddress['country_iso2']) ? $shippingAddress['country_iso2'] : $getOrder['billing_address']['country_iso2'],
+                "del_country" => isset($shippingAddress['country']) ? $shippingAddress['country'] : $getOrder['billing_address']['country'],
+                "del_postcode" => isset($shippingAddress['zip']) ? $shippingAddress['zip'] : $getOrder['billing_address']['zip'],
                 //
                 "due_date" => Carbon::parse($getOrder['date_created'])->format('Y-m-d'),
                 "ref" => $getOrder['id'],
