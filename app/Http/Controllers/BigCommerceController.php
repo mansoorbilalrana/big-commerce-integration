@@ -266,6 +266,7 @@ class BigCommerceController extends Controller
             $xml->addChild('inv_county', $data['inv_county']);
             $xml->addChild('inv_country', $data['inv_country']);
             $xml->addChild('inv_postcode', $data['inv_postcode']);
+            $xml->addChild('del_account', $data['del_account']);
             $xml->addChild('del_name', $data['del_name']);
             $xml->addChild('del_add1', $data['del_add1']);
             $xml->addChild('del_add2', $data['del_add2']);
